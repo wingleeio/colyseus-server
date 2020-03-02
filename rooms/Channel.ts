@@ -2,20 +2,20 @@ import { Room, Client } from "colyseus";
 import { Schema, type, MapSchema } from "@colyseus/schema";
 import { generateName } from "../util/helpers";
 
-class ChannelPlayer extends Schema {
+class Player extends Schema {
     @type("string") username: string = '';
 }
 
-class ChannelMessage extends Schema {
+class Message extends Schema {
     @type("string") username: string = '';
     @type("string") content: string = '';
 }
 
-class ChannelState extends Schema {
-    @type({ map: ChannelPlayer }) players = new MapSchema<ChannelPlayer>()
+class State extends Schema {
+    @type({ map: Player }) players = new MapSchema<Player>()
 
     createPlayer(id: string, username: string) {
-        this.players[id] = new ChannelPlayer()
+        this.players[id] = new Player()
         this.players[id].username = username;
     }
 
@@ -24,10 +24,10 @@ class ChannelState extends Schema {
     }
 }
 
-export class Channel extends Room<ChannelState> {
+export class Channel extends Room<State> {
 
     onCreate() {
-        this.setState(new ChannelState())
+        this.setState(new State())
     }
 
     onJoin(client: Client) {
@@ -35,7 +35,7 @@ export class Channel extends Room<ChannelState> {
 
         this.state.createPlayer(client.sessionId, name)
 
-        const data = new ChannelMessage();
+        const data = new Message();
 
         data.username = name;
         data.content = "joined the channel.";
@@ -46,8 +46,8 @@ export class Channel extends Room<ChannelState> {
     }
 
     onMessage(client: Client, message: any) {
-        const player: ChannelPlayer = this.state.players[client.sessionId];
-        const data = new ChannelMessage();
+        const player: Player = this.state.players[client.sessionId];
+        const data = new Message();
 
         data.username = player.username;
         data.content = message.content;
